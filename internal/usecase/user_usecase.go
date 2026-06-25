@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"errors"
+	"strings"
 
 	"github.com/itskyana/belajar-grpc-go/internal/domain"
 )
@@ -19,11 +19,15 @@ func NewUserUseCase(userRepo domain.UserRepository) *UserUseCase {
 
 func (u *UserUseCase) CreateUser(ctx context.Context, name, email string) (*domain.User, error) {
 	if name == "" {
-		return nil, errors.New("name is required")
+		return nil, domain.ErrInvalidInput
 	}
 
 	if email == "" {
-		return nil, errors.New("email is required")
+		return nil, domain.ErrInvalidInput
+	}
+
+	if !strings.Contains(email, "@") {
+		return nil, domain.ErrInvalidInput
 	}
 
 	user := &domain.User{
@@ -41,7 +45,7 @@ func (u *UserUseCase) CreateUser(ctx context.Context, name, email string) (*doma
 
 func (u *UserUseCase) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
 	if id <= 0 {
-		return nil, errors.New("invalid user ID")
+		return nil, domain.ErrInvalidInput
 	}
 
 	return u.userRepo.FindByID(ctx, id)

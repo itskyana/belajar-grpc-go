@@ -3,8 +3,11 @@ package postgres
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/itskyana/belajar-grpc-go/internal/domain"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -23,7 +26,13 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 
 	err := r.pool.QueryRow(ctx, query, user.Name, user.Email).Scan(&user.ID)
 	if err != nil {
-		return errors.New("failed to create user: " + err.Error())
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && strings.Contains(pgErr.Message, "users_email_key") {
+				return domain.ErrEmailAlreadyExists
+			}
+		}
+		return err
 	}
 
 	return nil
@@ -35,7 +44,10 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (*domain.User, 
 	user := &domain.User{}
 	err := r.pool.QueryRow(ctx, query, id).Scan(&user.ID, &user.Name, &user.Email)
 	if err != nil {
-		return nil, errors.New("user not found")
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, err
 	}
 
 	return user, nil
