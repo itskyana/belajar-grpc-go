@@ -69,19 +69,6 @@ func (h *UserHandler) ListUsers(ctx context.Context, req *userpb.ListUsersReques
 	}, nil
 }
 
-func mapError(err error) error {
-	switch {
-	case errors.Is(err, domain.ErrUserNotFound):
-		return status.Error(codes.NotFound, "user not found")
-	case errors.Is(err, domain.ErrEmailAlreadyExists):
-		return status.Error(codes.AlreadyExists, "email already exists")
-	case errors.Is(err, domain.ErrInvalidInput):
-		return status.Error(codes.InvalidArgument, "invalid input")
-	default:
-		return status.Error(codes.Internal, "internal server error")
-	}
-}
-
 func (h *UserHandler) UpdateUser(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error) {
 	user, err := h.userUseCase.UpdateUser(ctx, req.GetId(), req.GetName(), req.GetEmail())
 	if err != nil {
@@ -93,4 +80,29 @@ func (h *UserHandler) UpdateUser(ctx context.Context, req *userpb.UpdateUserRequ
 		Name:  user.Name,
 		Email: user.Email,
 	}, nil
+}
+
+func (h *UserHandler) DeleteUser(ctx context.Context, req *userpb.DeleteUserRequest) (*userpb.DeleteUserResponse, error) {
+	err := h.userUseCase.DeleteUser(ctx, req.GetId())
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	return &userpb.DeleteUserResponse{
+		Success: true,
+		Message: "user deleted successfully",
+	}, nil
+}
+
+func mapError(err error) error {
+	switch {
+	case errors.Is(err, domain.ErrUserNotFound):
+		return status.Error(codes.NotFound, "user not found")
+	case errors.Is(err, domain.ErrEmailAlreadyExists):
+		return status.Error(codes.AlreadyExists, "email already exists")
+	case errors.Is(err, domain.ErrInvalidInput):
+		return status.Error(codes.InvalidArgument, "invalid input")
+	default:
+		return status.Error(codes.Internal, "internal server error")
+	}
 }

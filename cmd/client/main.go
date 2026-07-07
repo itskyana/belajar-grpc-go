@@ -142,6 +142,39 @@ func main() {
 		}
 	}
 
+	// Test 9: Delete user
+	log.Println("\n=== Test 9: Delete User ===")
+	if createResp != nil {
+		deleteResp, err := client.DeleteUser(ctx, &userpb.DeleteUserRequest{
+			Id: createResp.GetId(),
+		})
+		if err != nil {
+			handleGRPCError("DeleteUser", err)
+		} else {
+			log.Printf("[OK] Deleted: Success=%v, Message=%s", deleteResp.GetSuccess(), deleteResp.GetMessage())
+		}
+	}
+
+	// Test 10: Delete user yang sudah terhapus
+	log.Println("\n=== Test 10: Delete Already Deleted User ===")
+	if createResp != nil {
+		_, err := client.DeleteUser(ctx, &userpb.DeleteUserRequest{
+			Id: createResp.GetId(),
+		})
+		if err != nil {
+			handleGRPCError("DeleteUser", err)
+		}
+	}
+
+	// Test 11: Delete user yang tidak ada
+	log.Println("\n=== Test 11: Delete Non-Existing User ===")
+	_, err = client.DeleteUser(ctx, &userpb.DeleteUserRequest{
+		Id: 999999,
+	})
+	if err != nil {
+		handleGRPCError("DeleteUser", err)
+	}
+
 	log.Println("\n[DONE] All tests completed!")
 }
 

@@ -17,6 +17,9 @@ service UserService {
 
     // update user
     rpc UpdateUser(UpdateUserRequest) returns (UpdateUserResponse);
+
+    // delete user
+    rpc DeleteUser(DeleteUserRequest) returns (DeleteUserResponse);
 }
 
 // request messages
@@ -38,6 +41,10 @@ message UpdateUserRequest {
     int64 id = 1;
     string name = 2;
     string email = 3;
+}
+
+message DeleteUserRequest {
+    int64 id = 1;
 }
 
 // response messages
@@ -62,6 +69,11 @@ message UpdateUserResponse {
     int64 id = 1;
     string name = 2;
     string email = 3;
+}
+
+message DeleteUserResponse {
+    bool success = 1;
+    string message = 2;
 }
 
 // shared message

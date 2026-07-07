@@ -110,3 +110,11 @@ func (u *UserUseCase) UpdateUser(ctx context.Context, id int64, name, email stri
 
 	return user, nil
 }
+
+func (u *UserUseCase) DeleteUser(ctx context.Context, id int64) error {
+	if id <= 0 {
+		return domain.ErrInvalidInput
+	}
+
+	return u.userRepo.Delete(ctx, id)
+}
