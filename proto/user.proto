@@ -11,22 +11,31 @@ service UserService {
 
     // get user
     rpc GetUser(GetUserRequest) returns (GetUserResponse);
+
+    // list user
+    rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 }
 
-// message
+// request messages
 message CreateUserRequest {
     string name = 1;
     string email = 2;
 }
 
+message GetUserRequest {
+    int64 id = 1;
+}
+
+message ListUsersRequest {
+    int32 limit = 1;
+    int32 offset = 2;
+}
+
+// response messages
 message CreateUserResponse {
     int64 id = 1;
     string name = 2;
     string email = 3;
-}
-
-message GetUserRequest {
-    int64 id = 1;
 }
 
 message GetUserResponse {
@@ -34,3 +43,16 @@ message GetUserResponse {
     string name = 2;
     string email = 3;
 }
+
+message ListUsersResponse {
+    repeated User users = 1;
+    int32 total = 2;
+}
+
+// shared message
+message User {
+    int64 id = 1;
+    string name = 2;
+    string email = 3;
+}
+

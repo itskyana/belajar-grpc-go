@@ -50,3 +50,30 @@ func (u *UserUseCase) GetUserByID(ctx context.Context, id int64) (*domain.User, 
 
 	return u.userRepo.FindByID(ctx, id)
 }
+
+func (u *UserUseCase) ListUsers(ctx context.Context, limit, offset int32) ([]*domain.User, int32, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+
+	if limit > 100 {
+		limit = 100
+	}
+
+	if offset < 0 {
+		offset = 0
+	}
+
+	users, err := u.userRepo.List(ctx, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	total, err := u.userRepo.Count(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
+
+}

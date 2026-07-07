@@ -52,3 +52,45 @@ func (r *UserRepository) FindByID(ctx context.Context, id int64) (*domain.User, 
 
 	return user, nil
 }
+
+func (r *UserRepository) List(ctx context.Context, limit, offset int32) ([]*domain.User, error) {
+	query := `
+        SELECT id, name, email 
+        FROM users 
+        ORDER BY id DESC 
+        LIMIT $1 OFFSET $2
+    `
+
+	rows, err := r.pool.Query(ctx, query, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]*domain.User, 0)
+	for rows.Next() {
+		user := &domain.User{}
+		if err := rows.Scan(&user.ID, &user.Name, &user.Email); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (r *UserRepository) Count(ctx context.Context) (int32, error) {
+	query := `SELECT COUNT(*) FROM users`
+
+	var count int32
+	err := r.pool.QueryRow(ctx, query).Scan(&count)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}

@@ -48,6 +48,27 @@ func (h *UserHandler) GetUser(ctx context.Context, req *userpb.GetUserRequest) (
 	}, nil
 }
 
+func (h *UserHandler) ListUsers(ctx context.Context, req *userpb.ListUsersRequest) (*userpb.ListUsersResponse, error) {
+	users, total, err := h.userUseCase.ListUsers(ctx, req.GetLimit(), req.GetOffset())
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	pbUsers := make([]*userpb.User, len(users))
+	for i, user := range users {
+		pbUsers[i] = &userpb.User{
+			Id:    user.ID,
+			Name:  user.Name,
+			Email: user.Email,
+		}
+	}
+
+	return &userpb.ListUsersResponse{
+		Users: pbUsers,
+		Total: total,
+	}, nil
+}
+
 func mapError(err error) error {
 	switch {
 	case errors.Is(err, domain.ErrUserNotFound):

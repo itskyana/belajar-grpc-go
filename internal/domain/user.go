@@ -11,4 +11,6 @@ type User struct {
 type UserRepository interface {
 	Create(ctx context.Context, user *User) error
 	FindByID(ctx context.Context, id int64) (*User, error)
+	List(ctx context.Context, limit, offset int32) ([]*User, error)
+	Count(ctx context.Context) (int32, error)
 }
