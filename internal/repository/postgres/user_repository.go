@@ -94,3 +94,31 @@ func (r *UserRepository) Count(ctx context.Context) (int32, error) {
 
 	return count, nil
 }
+
+func (r *UserRepository) Update(ctx context.Context, user *domain.User) error {
+	query := `
+		UPDATE users
+		SET name = $1, email = $2, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $3
+		RETURNING id, name, email
+	`
+
+	err := r.pool.QueryRow(ctx, query, user.Name, user.Email, user.ID).Scan(&user.ID, &user.Name, &user.Email)
+
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.ErrUserNotFound
+		}
+
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == "23505" && strings.Contains(pgErr.Message, "users_email_key") {
+				return domain.ErrEmailAlreadyExists
+			}
+		}
+
+		return err
+	}
+
+	return nil
+}

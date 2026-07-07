@@ -41,14 +41,34 @@ func main() {
 	if err != nil {
 		handleGRPCError("CreateUser", err)
 	} else {
-		log.Printf("✅ Created: ID=%d, Name=%s, Email=%s",
+		log.Printf("[OK] Created: ID=%d, Name=%s, Email=%s",
 			createResp.GetId(),
 			createResp.GetName(),
 			createResp.GetEmail())
 	}
 
-	// Test 2: List users dengan pagination
-	log.Println("\n=== Test 2: List Users (limit 5) ===")
+	// Test 2: Update user
+	log.Println("\n=== Test 2: Update User ===")
+	var updatedEmail string
+	if createResp != nil {
+		updatedEmail = fmt.Sprintf("updated%d@example.com", timestamp)
+		updateResp, err := client.UpdateUser(ctx, &userpb.UpdateUserRequest{
+			Id:    createResp.GetId(),
+			Name:  "Updated User",
+			Email: updatedEmail,
+		})
+		if err != nil {
+			handleGRPCError("UpdateUser", err)
+		} else {
+			log.Printf("[OK] Updated: ID=%d, Name=%s, Email=%s",
+				updateResp.GetId(),
+				updateResp.GetName(),
+				updateResp.GetEmail())
+		}
+	}
+
+	// Test 3: List users dengan pagination
+	log.Println("\n=== Test 3: List Users (limit 5) ===")
 	listResp, err := client.ListUsers(ctx, &userpb.ListUsersRequest{
 		Limit:  5,
 		Offset: 0,
@@ -56,31 +76,31 @@ func main() {
 	if err != nil {
 		handleGRPCError("ListUsers", err)
 	} else {
-		log.Printf("✅ Total users: %d", listResp.GetTotal())
+		log.Printf("[OK] Total users: %d", listResp.GetTotal())
 		log.Println("Users:")
 		for i, user := range listResp.GetUsers() {
 			log.Printf("  %d. ID=%d, Name=%s, Email=%s", i+1, user.GetId(), user.GetName(), user.GetEmail())
 		}
 	}
 
-	// Test 3: Get user yang baru dibuat
+	// Test 4: Get user yang baru dibuat
 	if createResp != nil {
-		log.Println("\n=== Test 3: Get Existing User ===")
+		log.Println("\n=== Test 4: Get Existing User ===")
 		getResp, err := client.GetUser(ctx, &userpb.GetUserRequest{
 			Id: createResp.GetId(),
 		})
 		if err != nil {
 			handleGRPCError("GetUser", err)
 		} else {
-			log.Printf("✅ Got: ID=%d, Name=%s, Email=%s",
+			log.Printf("[OK] Got: ID=%d, Name=%s, Email=%s",
 				getResp.GetId(),
 				getResp.GetName(),
 				getResp.GetEmail())
 		}
 	}
 
-	// Test 4: Get user yang tidak ada
-	log.Println("\n=== Test 4: Get Non-Existing User ===")
+	// Test 5: Get user yang tidak ada
+	log.Println("\n=== Test 5: Get Non-Existing User ===")
 	_, err = client.GetUser(ctx, &userpb.GetUserRequest{
 		Id: 999999,
 	})
@@ -88,36 +108,60 @@ func main() {
 		handleGRPCError("GetUser", err)
 	}
 
-	// Test 5: Create user dengan email duplikat
-	log.Println("\n=== Test 5: Create User with Duplicate Email ===")
+	// Test 6: Create user dengan email duplikat
+	log.Println("\n=== Test 6: Create User with Duplicate Email ===")
 	_, err = client.CreateUser(ctx, &userpb.CreateUserRequest{
 		Name:  "Another User",
-		Email: email,
+		Email: updatedEmail, // Email yang sudah diupdate di test 2
 	})
 	if err != nil {
 		handleGRPCError("CreateUser", err)
 	}
 
-	log.Println("\n✅ All tests completed!")
+	// Test 7: Update user yang tidak ada
+	log.Println("\n=== Test 7: Update Non-Existing User ===")
+	_, err = client.UpdateUser(ctx, &userpb.UpdateUserRequest{
+		Id:    999999,
+		Name:  "Ghost User",
+		Email: "ghost@example.com",
+	})
+	if err != nil {
+		handleGRPCError("UpdateUser", err)
+	}
+
+	// Test 8: Update user dengan input invalid
+	log.Println("\n=== Test 8: Update User with Invalid Input ===")
+	if createResp != nil {
+		_, err = client.UpdateUser(ctx, &userpb.UpdateUserRequest{
+			Id:    createResp.GetId(),
+			Name:  "",
+			Email: "invalid-email",
+		})
+		if err != nil {
+			handleGRPCError("UpdateUser", err)
+		}
+	}
+
+	log.Println("\n[DONE] All tests completed!")
 }
 
 func handleGRPCError(method string, err error) {
 	st, ok := status.FromError(err)
 	if !ok {
-		log.Printf("❌ %s failed: %v", method, err)
+		log.Printf("[ERROR] %s failed: %v", method, err)
 		return
 	}
 
 	switch st.Code() {
 	case codes.NotFound:
-		log.Printf("⚠️  %s: %s (code: NotFound)", method, st.Message())
+		log.Printf("[WARN] %s: %s (code: NotFound)", method, st.Message())
 	case codes.AlreadyExists:
-		log.Printf("⚠️  %s: %s (code: AlreadyExists)", method, st.Message())
+		log.Printf("[WARN] %s: %s (code: AlreadyExists)", method, st.Message())
 	case codes.InvalidArgument:
-		log.Printf("⚠️  %s: %s (code: InvalidArgument)", method, st.Message())
+		log.Printf("[WARN] %s: %s (code: InvalidArgument)", method, st.Message())
 	case codes.Internal:
-		log.Printf("❌ %s: %s (code: Internal)", method, st.Message())
+		log.Printf("[ERROR] %s: %s (code: Internal)", method, st.Message())
 	default:
-		log.Printf("❌ %s: %s (code: %s)", method, st.Message(), st.Code())
+		log.Printf("[ERROR] %s: %s (code: %s)", method, st.Message(), st.Code())
 	}
 }

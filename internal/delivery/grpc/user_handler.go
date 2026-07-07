@@ -81,3 +81,16 @@ func mapError(err error) error {
 		return status.Error(codes.Internal, "internal server error")
 	}
 }
+
+func (h *UserHandler) UpdateUser(ctx context.Context, req *userpb.UpdateUserRequest) (*userpb.UpdateUserResponse, error) {
+	user, err := h.userUseCase.UpdateUser(ctx, req.GetId(), req.GetName(), req.GetEmail())
+	if err != nil {
+		return nil, mapError(err)
+	}
+
+	return &userpb.UpdateUserResponse{
+		Id:    user.ID,
+		Name:  user.Name,
+		Email: user.Email,
+	}, nil
+}

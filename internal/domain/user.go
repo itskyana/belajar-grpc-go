@@ -13,4 +13,5 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id int64) (*User, error)
 	List(ctx context.Context, limit, offset int32) ([]*User, error)
 	Count(ctx context.Context) (int32, error)
+	Update(ctx context.Context, user *User) error
 }
